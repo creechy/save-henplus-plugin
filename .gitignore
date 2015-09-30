@@ -1,0 +1,8 @@
+*~
+nbproject/private
+nbproject/private/*
+build/
+build/*
+dist/
+dist/*
+z/
