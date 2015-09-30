@@ -91,7 +91,7 @@ public final class SaveCommand extends AbstractCommand {
             String filePrefix = st.nextToken().trim();
             String selectSql = st.nextToken("").trim();
 
-            session.println("Saving to " + filePrefix);
+            session.println("Saving to " + (folderMode ? "folder":"file") + ": " + filePrefix);
 
             Statement statement = session.createStatement();
             ResultSet resultSet = null;
@@ -103,13 +103,13 @@ public final class SaveCommand extends AbstractCommand {
             }
 
             ResultSetMetaData metaData = null;
-            int rows;
+            int columns;
             String[] columnNames;
             try {
                 metaData = resultSet.getMetaData();
-                rows = metaData.getColumnCount();
-                columnNames = new String[rows];
-                for (int idx = 0; idx < rows; idx++) {
+                columns = metaData.getColumnCount();
+                columnNames = new String[columns];
+                for (int idx = 0; idx < columns; idx++) {
                     columnNames[idx] = metaData.getColumnLabel(idx + 1);
                 }
             } catch (SQLException e) {
@@ -123,8 +123,9 @@ public final class SaveCommand extends AbstractCommand {
                 long lapTime = -1;
                 long execTime = -1;
 
-                for (int count = 1; resultSet.next(); count++) {
-                    for (int idx = 0; idx < rows; idx++) {
+                int rows = 0;
+                for (int count = 1; resultSet.next(); count++, rows++) {
+                    for (int idx = 0; idx < columns; idx++) {
                         Object field = resultSet.getObject(idx + 1);
                         String fileName;
                         if (folderMode) {
