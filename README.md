@@ -1,7 +1,7 @@
 ##Save Henplus Plug-In##
 
 This plugin allows you to save the results of a SELECT statement to multiple files. The data is saved so that every column of every 
-row is saved two a separate file. There are two commands allowing you to save everything using a single file prefix, or to a hierarchy
+row is saved to a separate file. There are two commands allowing you to save everything using a single file prefix, or to a hierarchy
 of folders based on a folder prefix.
 
 
