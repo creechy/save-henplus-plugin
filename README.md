@@ -1,27 +1,27 @@
-##Catalog Henplus Plug-In##
+##Save Henplus Plug-In##
 
-This plugin allows you to change the default database/catalog the session is set to use. Its very similar to the MySQL `use database` command, only with a more generic JDBC nomenclature.
+This plugin allows you to save the results of a SELECT statement to multiple files. The data is saved so that every column of every 
+row is saved two a separate file. There are two commands allowing you to save everything using a single file prefix, or to a hierarchy
+of folders based on a folder prefix.
+
 
 ###Easy Setup###
 
-Simply put `catalog-henplus-plugin.jar` in to the CLASSPATH of `henplus`, generally in the `share/henplus` folder somewhere.
+Simply put `save-henplus-plugin.jar` in to the CLASSPATH of `henplus`, generally in the `share/henplus` folder somewhere.
 
 Start `henplus` and register the plugin. Use the `plug-in` command for this. This only needs to be done once, and will be persisted.
 
-     Hen*Plus> plug-in org.fakebelieve.henplus.plugins.catalog.CatalogCommand
+     Hen*Plus> plug-in org.fakebelieve.henplus.plugins.save.SaveCommand
 
 ###Usage###
 
-The plugin responds to two commands `catalog` and `catalogs`.
+The plugin responds to two commands `save-file` and `save-folder`.
 
-*Listing databases with the `catalogs` command*
+*File-based output with `save-file` command*
 
-The `catalogs` command will list all of the available database/catalogs for the current session.
+The `save-file` command will save all of the data to multiple files rooted a a single file prefix. All the files will appear
+in a single directory from the base of the prefix.
 
-*Displaying the current database with the `catalog` command*
+*Folder-based output with `save-folder` command*
 
-The `catalog` command with no arguments will display the current database/catalog for the current session.
-
-*Changing the database with the `catalog` command*
-
-The `catalog` command takes an optional parameter. If specified, this is the database/catalog you want to set as the default for the current session. Partial database completion is available by hitting TAB.
+The `save-folder` command will save all the data to multiple files broken down into separate folders, one folder for each row.
