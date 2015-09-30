@@ -8,6 +8,7 @@ import henplus.AbstractCommand;
 import henplus.CommandDispatcher;
 import henplus.HenPlus;
 import henplus.SQLSession;
+import henplus.commands.TimeRenderer;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -90,7 +91,7 @@ public final class SaveCommand extends AbstractCommand {
             String filePrefix = st.nextToken().trim();
             String selectSql = st.nextToken("").trim();
 
-            System.err.format("Dumping to: %s\nFrom statement: %s\n", filePrefix, selectSql);
+            session.println("Saving to " + filePrefix);
 
             Statement statement = session.createStatement();
             ResultSet resultSet = null;
@@ -102,13 +103,13 @@ public final class SaveCommand extends AbstractCommand {
             }
 
             ResultSetMetaData metaData = null;
-            int columnCount;
+            int rows;
             String[] columnNames;
             try {
                 metaData = resultSet.getMetaData();
-                columnCount = metaData.getColumnCount();
-                columnNames = new String[columnCount];
-                for (int idx = 0; idx < columnCount; idx++) {
+                rows = metaData.getColumnCount();
+                columnNames = new String[rows];
+                for (int idx = 0; idx < rows; idx++) {
                     columnNames[idx] = metaData.getColumnLabel(idx + 1);
                 }
             } catch (SQLException e) {
@@ -118,8 +119,12 @@ public final class SaveCommand extends AbstractCommand {
 
 
             try {
+                final long startTime = System.currentTimeMillis();
+                long lapTime = -1;
+                long execTime = -1;
+
                 for (int count = 1; resultSet.next(); count++) {
-                    for (int idx = 0; idx < columnCount; idx++) {
+                    for (int idx = 0; idx < rows; idx++) {
                         Object field = resultSet.getObject(idx + 1);
                         String fileName;
                         if (folderMode) {
@@ -130,14 +135,31 @@ public final class SaveCommand extends AbstractCommand {
                         } else {
                             fileName = String.format("%s.%d.%s.out", filePrefix, count, columnNames[idx]);
                         }
-                        System.err.println(fileName);
-                        BufferedWriter out = new BufferedWriter(new FileWriter(fileName,false));
+                        BufferedWriter out = new BufferedWriter(new FileWriter(fileName, false));
                         if (field != null) {
                             out.write(field.toString());
                         }
                         out.close();
                     }
+                    lapTime = System.currentTimeMillis() - startTime;
                 }
+
+                session.println(rows + " row" + (rows == 1 ? "" : "s") + " in result");
+
+                execTime = System.currentTimeMillis() - startTime;
+                session.print(" (");
+                if (lapTime > 0) {
+                    session.print("first row: ");
+                    if (session.printMessages()) {
+                        TimeRenderer.printTime(lapTime, HenPlus.msg());
+                    }
+                    session.print("; total: ");
+                }
+                if (session.printMessages()) {
+                    TimeRenderer.printTime(execTime, HenPlus.msg());
+                }
+                session.println(")");
+
             } catch (SQLException e) {
                 HenPlus.msg().println(e.getMessage());
                 return EXEC_FAILED;
