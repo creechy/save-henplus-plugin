@@ -95,80 +95,98 @@ public final class SaveCommand extends AbstractCommand {
 
             Statement statement = session.createStatement();
             ResultSet resultSet = null;
-            try {
-                resultSet = statement.executeQuery(selectSql);
-            } catch (SQLException e) {
-                HenPlus.msg().println(e.getMessage());
-                return EXEC_FAILED;
-            }
 
-            ResultSetMetaData metaData = null;
-            int columns;
-            String[] columnNames;
             try {
-                metaData = resultSet.getMetaData();
-                columns = metaData.getColumnCount();
-                columnNames = new String[columns];
-                for (int idx = 0; idx < columns; idx++) {
-                    columnNames[idx] = metaData.getColumnLabel(idx + 1);
+                try {
+                    resultSet = statement.executeQuery(selectSql);
+                } catch (SQLException e) {
+                    HenPlus.msg().println(e.getMessage());
+                    return EXEC_FAILED;
                 }
-            } catch (SQLException e) {
-                HenPlus.msg().println(e.getMessage());
-                return EXEC_FAILED;
-            }
 
-
-            try {
-                final long startTime = System.currentTimeMillis();
-                long lapTime = -1;
-                long execTime = -1;
-
-                int rows = 0;
-                for (int count = 1; resultSet.next(); count++, rows++) {
+                ResultSetMetaData metaData = null;
+                int columns;
+                String[] columnNames;
+                try {
+                    metaData = resultSet.getMetaData();
+                    columns = metaData.getColumnCount();
+                    columnNames = new String[columns];
                     for (int idx = 0; idx < columns; idx++) {
-                        Object field = resultSet.getObject(idx + 1);
-                        String fileName;
-                        if (folderMode) {
-                            String dirName = String.format("%s/%d", filePrefix, count);
-                            fileName = String.format("%s/%d/%s.out", filePrefix, count, columnNames[idx]);
-                            File dir = new File(dirName);
-                            dir.mkdirs();
-                        } else {
-                            fileName = String.format("%s.%d.%s.out", filePrefix, count, columnNames[idx]);
-                        }
-                        BufferedWriter out = new BufferedWriter(new FileWriter(fileName, false));
-                        if (field != null) {
-                            out.write(field.toString());
-                        }
-                        out.close();
+                        columnNames[idx] = metaData.getColumnLabel(idx + 1);
                     }
-                    lapTime = System.currentTimeMillis() - startTime;
+                } catch (SQLException e) {
+                    HenPlus.msg().println(e.getMessage());
+                    return EXEC_FAILED;
                 }
 
-                session.println(rows + " row" + (rows == 1 ? "" : "s") + " in result");
 
-                execTime = System.currentTimeMillis() - startTime;
-                session.print(" (");
-                if (lapTime > 0) {
-                    session.print("first row: ");
+                try {
+                    final long startTime = System.currentTimeMillis();
+                    long lapTime = -1;
+                    long execTime = -1;
+
+                    int rows = 0;
+                    for (int count = 1; resultSet.next(); count++, rows++) {
+                        for (int idx = 0; idx < columns; idx++) {
+                            Object field = resultSet.getObject(idx + 1);
+                            String fileName;
+                            if (folderMode) {
+                                String dirName = String.format("%s/%d", filePrefix, count);
+                                fileName = String.format("%s/%d/%s.out", filePrefix, count, columnNames[idx]);
+                                File dir = new File(dirName);
+                                dir.mkdirs();
+                            } else {
+                                fileName = String.format("%s.%d.%s.out", filePrefix, count, columnNames[idx]);
+                            }
+                            BufferedWriter out = new BufferedWriter(new FileWriter(fileName, false));
+                            if (field != null) {
+                                out.write(field.toString());
+                            }
+                            out.close();
+                        }
+                        lapTime = System.currentTimeMillis() - startTime;
+                    }
+
+                    session.println(rows + " row" + (rows == 1 ? "" : "s") + " in result");
+
+                    execTime = System.currentTimeMillis() - startTime;
+                    session.print(" (");
+                    if (lapTime > 0) {
+                        session.print("first row: ");
+                        if (session.printMessages()) {
+                            TimeRenderer.printTime(lapTime, HenPlus.msg());
+                        }
+                        session.print("; total: ");
+                    }
                     if (session.printMessages()) {
-                        TimeRenderer.printTime(lapTime, HenPlus.msg());
+                        TimeRenderer.printTime(execTime, HenPlus.msg());
                     }
-                    session.print("; total: ");
-                }
-                if (session.printMessages()) {
-                    TimeRenderer.printTime(execTime, HenPlus.msg());
-                }
-                session.println(")");
+                    session.println(")");
 
-            } catch (SQLException e) {
-                HenPlus.msg().println(e.getMessage());
-                return EXEC_FAILED;
-            } catch (IOException e) {
-                HenPlus.msg().println(e.getMessage());
-                return EXEC_FAILED;
+                } catch (SQLException e) {
+                    HenPlus.msg().println(e.getMessage());
+                    return EXEC_FAILED;
+                } catch (IOException e) {
+                    HenPlus.msg().println(e.getMessage());
+                    return EXEC_FAILED;
+                }
             }
-
+            finally {
+                if (resultSet != null) {
+                    try {
+                        resultSet.close();
+                    } catch (SQLException e) {
+                        // IGNORE
+                    }
+                }
+                if (statement != null) {
+                    try {
+                        statement.close();
+                    } catch (SQLException e) {
+                        // IGNORE
+                    }
+                }
+            }
         }
 
         return result;
