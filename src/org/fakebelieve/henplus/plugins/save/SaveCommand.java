@@ -49,18 +49,7 @@ public final class SaveCommand extends AbstractCommand {
      */
     @Override
     public boolean participateInCommandCompletion() {
-        return true;
-    }
-
-    protected List<String> getCatalogs(SQLSession session) throws SQLException {
-        List<String> list = new ArrayList<String>();
-        ResultSet catalogs = session.getConnection().getMetaData().getCatalogs();
-        while (catalogs.next()) {
-            list.add(catalogs.getString(1));
-        }
-        catalogs.close();
-
-        return list;
+        return false;
     }
 
     /*
@@ -194,15 +183,6 @@ public final class SaveCommand extends AbstractCommand {
 
     /*
      * (non-Javadoc)
-     * @see henplus.Command#isComplete(java.lang.String)
-     */
-    @Override
-    public boolean isComplete(String command) {
-        return true;
-    }
-
-    /*
-     * (non-Javadoc)
      * @see henplus.Command#requiresValidSession(java.lang.String)
      */
     @Override
@@ -265,23 +245,40 @@ public final class SaveCommand extends AbstractCommand {
         return null;
     }
 
-    @Override
-    public Iterator complete(CommandDispatcher disp, String partialCommand, String lastWord) {
-        HenPlus.getInstance().getCurrentSession();
-
-        try {
-            List<String> catalogs = getCatalogs(HenPlus.getInstance().getCurrentSession());
-            for (Iterator<String> i = catalogs.listIterator(); i.hasNext(); ) {
-                String catalog = i.next();
-                if (!catalog.startsWith(lastWord)) {
-                    i.remove();
-                }
-            }
-            return catalogs.iterator();
-        } catch (SQLException ex) {
-            HenPlus.msg().println("Problem - " + ex.getMessage());
-            return super.complete(disp, partialCommand, lastWord);
-        }
-
+    /**
+     * looks, if this word is contained in 'all', preceeded and followed by a whitespace.
+     */
+    private boolean containsWord(final String all, final String word) {
+        final int wordLen = word.length();
+        final int index = all.indexOf(word);
+        return index >= 0 && (index == 0 || Character.isWhitespace(all.charAt(index - 1)))
+                && Character.isWhitespace(all.charAt(index + wordLen));
     }
+
+    public boolean isComplete(String command) {
+        command = command.toUpperCase(); // fixme: expensive.
+        if (command.startsWith("COMMIT") || command.startsWith("ROLLBACK")) {
+            return true;
+        }
+        // FIXME: this is a very dumb 'parser'.
+        // i.e. string literals are not considered.
+        final boolean anyProcedure = command.startsWith("BEGIN")
+                || command.startsWith("DECLARE")
+                || (command.startsWith("CREATE") || command.startsWith("REPLACE"))
+                && (containsWord(command, "PROCEDURE") || containsWord(command, "FUNCTION") || containsWord(command, "PACKAGE") || containsWord(
+                command, "TRIGGER"));
+
+        if (!anyProcedure && command.endsWith(";")) {
+            return true;
+        }
+        // sqlplus is complete on a single '/' on a line.
+        if (command.length() >= 3) {
+            final int lastPos = command.length() - 1;
+            if (command.charAt(lastPos) == '\n' && command.charAt(lastPos - 1) == '/' && command.charAt(lastPos - 2) == '\n') {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
