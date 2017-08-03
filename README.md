@@ -1,11 +1,11 @@
-##Save Henplus Plug-In##
+## Save Henplus Plug-In ##
 
 This plugin allows you to save the results of a SELECT statement to multiple files. The data is saved so that every column of every 
 row is saved to a separate file. There are two commands allowing you to save everything using a single file prefix, or to a hierarchy
 of folders based on a folder prefix.
 
 
-###Easy Setup###
+### Easy Setup ###
 
 Simply put `save-henplus-plugin.jar` in to the CLASSPATH of `henplus`, generally in the `share/henplus` folder somewhere.
 
@@ -13,7 +13,7 @@ Start `henplus` and register the plugin. Use the `plug-in` command for this. Thi
 
      Hen*Plus> plug-in org.fakebelieve.henplus.plugins.save.SaveCommand
 
-###Usage###
+### Usage ###
 
 The plugin responds to two commands `save-file` and `save-folder`.
 
